@@ -168,10 +168,7 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
             aCell.imageView?.image = nil
             aCell.activityIndicator?.startAnimating()
         }
-        
-        // insert missing photos??
-        // println("MAX - # Existing: \(MAX_DOWNLOAD_PHOTOS - collectionView.numberOfItemsInSection(0))")
-        
+                
         if MAX_DOWNLOAD_PHOTOS > collectionView.numberOfItemsInSection(0) {
             for ix in 1...(MAX_DOWNLOAD_PHOTOS - collectionView.numberOfItemsInSection(0)) {
                 let photoDict: [String:AnyObject] = [
