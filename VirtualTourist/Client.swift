@@ -33,7 +33,6 @@ class Client:NSObject {
             "extras":   Constants.Extras,
             "format":   Constants.DataFormat,
             "nojsoncallback": Constants.NoJSONCallbank
-            // "per_page":     Constants.MAX_PHOTOS_WANTED // testing
         ]
         
         // choose a random page for Flickr
@@ -41,7 +40,6 @@ class Client:NSObject {
         methodArgs["page"] = "\(randomPage)"
         
         let urlString = Constants.BaseURL + Client.escapedParameters(methodArgs)
-        // println(">> Calling url:\n   \(urlString)")
         let url     = NSURL(string: urlString)!
         let request = NSURLRequest(URL: url)
         

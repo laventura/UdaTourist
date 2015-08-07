@@ -80,7 +80,6 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
                         // What TODO
                         println("LocVC: Still no photos found for \(pin.locname!)")
                     }
-                    // TODO: color change?
                 } else {
                     if errorString != nil {
                         Client.showAlert("Error", message: errorString!, onViewController: self)
@@ -115,17 +114,13 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
 
     // MARK: - Navigation
 
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
         if let id = segue.identifier {
             if id == segueID {
                 let destinationVC = segue.destinationViewController as! PhotosViewController
                 destinationVC.receivedPin = selectedPin.pin
             }
         }
-        // (segue.destinationViewController as! PhotosViewController).receivedPin = selectedPin.pin
     }
     
     // MARK: Fetched Results Controller
@@ -244,7 +239,6 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
     
     // show photos
     func showPhotosAtPin(sender: UIButton!) {
-        // println("====> in showPhotosAtPin.. for \(selectedPin.pin.locname!)")
         var mkview = self.mapView.viewForAnnotation(selectedPin)
         
         // check if currently downloading...

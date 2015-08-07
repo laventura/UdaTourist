@@ -149,8 +149,6 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         let MAX_DOWNLOAD_PHOTOS = Client.Constants.MAX_PHOTOS_WANTED.toInt()!
         
-        // println("*** New Collection *** geting more \(MAX_DOWNLOAD_PHOTOS); current items:\(collectionView.numberOfItemsInSection(0))")
-        
         if receivedPin.numPhotos?.integerValue < MAX_DOWNLOAD_PHOTOS {
             Client.showAlert("Error", message: "All pics for this pin downloaded!", onViewController: self)
         }
@@ -162,13 +160,12 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         // reset all images...
         for index in 0...collectionView.numberOfItemsInSection(0)-1 {
             let ix = NSIndexPath(forRow: index, inSection: 0)!
-            // println("[  ix section,row,item: \(ix.section), \(ix.row), \(ix.item) ]")
             var aCell = collectionView.cellForItemAtIndexPath(ix)! as! PhotoViewCell
             
             aCell.imageView?.image = nil
             aCell.activityIndicator?.startAnimating()
         }
-                
+        
         if MAX_DOWNLOAD_PHOTOS > collectionView.numberOfItemsInSection(0) {
             for ix in 1...(MAX_DOWNLOAD_PHOTOS - collectionView.numberOfItemsInSection(0)) {
                 let photoDict: [String:AnyObject] = [
@@ -286,8 +283,6 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
     
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         
-        // println("[  index section,row,item: \(indexPath.section), \(indexPath.row), \(indexPath.item) ]")
-        
         let cell: PhotoViewCell = collectionView.dequeueReusableCellWithReuseIdentifier(cellReuseID, forIndexPath: indexPath) as! PhotoViewCell
         
         let photo = self.fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
@@ -346,7 +341,6 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         if selectedPhotosDict.isEmpty {
             newCollectionButton.setTitle(ID_BTN_NEW_COLLECT, forState: UIControlState.Normal)
         }
-        // showSelectedPhotos()
 
     }
     
