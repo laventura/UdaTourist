@@ -243,17 +243,11 @@ class LocationViewController: UIViewController, MKMapViewDelegate, NSFetchedResu
         
         // check if currently downloading...
         if selectedPin.pin.isDownloading {
-            self.alert = UIAlertController(title: "Downloading Photos", message: "Getting pics from Flickr...", preferredStyle: UIAlertControllerStyle.Alert)
-            self.alert?.addAction(UIAlertAction(title: "OK", style: .Default, handler: { (alertAction) -> Void in
-                self.alert?.dismissViewControllerAnimated(true, completion: nil)
-            }))
-            self.presentViewController(self.alert!, animated: true, completion: nil)
+            
+            Client.showAlert("Downloading Photos", message: "Getting pics from Flickr...", onViewController: self)
         } else if selectedPin.pin.photos.count == 0 {   // no images
-            self.alert = UIAlertController(title: "No Pics!", message: "None found at this location.\nTry another location!", preferredStyle: UIAlertControllerStyle.Alert)
-            self.alert?.addAction(UIAlertAction(title: "OK", style: .Default, handler: { (alertAction) -> Void in
-                self.alert?.dismissViewControllerAnimated(true, completion: nil)
-            }))
-            self.presentViewController(self.alert!, animated: true, completion: nil)
+            
+            Client.showAlert("No Photos!", message: "None found at this location.\nTry another location!", onViewController: self)
         } else {    // images exist - segue to Album
             self.performSegueWithIdentifier(segueID, sender: nil)
         }
