@@ -41,13 +41,19 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         selectedPhotosDict = [NSIndexPath: Photo]()
         
+        // Notification for each photo loaded
+        NSNotificationCenter.defaultCenter().addObserver(self,
+            selector: "loadedOnePhoto:",
+            name: Client.Event.NOTIF_ONE_PHOTO_LOADED,
+            object: nil)
+        
         // setup map region in upper view
         setupMap()
         
         if receivedPin.photos.count == 0 {
             receivedPin.downloadPhotos({ (isSuccess, errorString) -> Void in
                 if isSuccess {
-                    println("Downloaded \(self.receivedPin.photos.count) pics for \(self.receivedPin.locname!)")
+                    println("Album: Downloaded \(self.receivedPin.photos.count) pics for \(self.receivedPin.locname!)")
                 } else {
                     if errorString != nil {
                         println("...ERROR newCollection for: \(self.receivedPin.locname!)")
@@ -60,7 +66,8 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         // get the FRC
         fetchedResultsController.delegate = self
-        fetchedResultsController.performFetch(nil)
+        
+        self.fetch()
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -102,6 +109,15 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         self.mapView.alpha = 0.9 // test
     }
     
+    // use the FRC to fetch
+    func fetch() {
+        var error = NSErrorPointer()
+        fetchedResultsController.performFetch(error)
+        if error != nil {
+            println("Album: Error while fetching \(error)")
+        }
+    }
+    
     // MARK: - Core Data
     var sharedContext: NSManagedObjectContext {
         return CoreDataStackManager.sharedInstance().managedObjectContext!
@@ -119,6 +135,14 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         } ()
     
+    // MARK: - Notifications 
+    // method called when one photo is successfully downloaded to Docs dir. Event fired from Photo
+    func loadedOnePhoto(photo: Photo) {
+        dispatch_async(dispatch_get_main_queue(), { () -> Void in
+            self.collectionView.reloadData()
+        })
+    }
+    
     // MARK: - Actions
     
     @IBAction func getNewCollection(sender: UIButton) {
@@ -129,9 +153,7 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
             if selectedPhotosDict.count > 0 {
                 for (theIndex, thePhoto) in selectedPhotosDict {
                     
-                    // Delete selected Photo from CoreData, and Save Context
-                    sharedContext.deleteObject(thePhoto)
-                    CoreDataStackManager.sharedInstance().saveContext()
+                    thePhoto.delete()   // deletes from CoreData and Local filesys
                     
                     // ... also remove from our list
                     selectedPhotosDict.removeValueForKey(theIndex)
@@ -158,34 +180,37 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         newCollectionButton.enabled = false
         
         // reset all images...
-        for index in 0...collectionView.numberOfItemsInSection(0)-1 {
-            let ix = NSIndexPath(forRow: index, inSection: 0)!
-            var aCell = collectionView.cellForItemAtIndexPath(ix)! as! PhotoViewCell
-            
-            aCell.imageView?.image = nil
-            aCell.activityIndicator?.startAnimating()
+        if collectionView.numberOfItemsInSection(0) > 0 {
+            for index in 0...collectionView.numberOfItemsInSection(0)-1 {
+                let ixPath = NSIndexPath(forRow: index, inSection: 0)!
+                var aCell = collectionView.cellForItemAtIndexPath(ixPath)! as! PhotoViewCell
+                
+                aCell.imageView?.image = nil
+                aCell.activityIndicator?.startAnimating()
+                
+            }
         }
         
+        // Insert missing photos to collection --- some Pics have been deleted...
         if MAX_DOWNLOAD_PHOTOS > collectionView.numberOfItemsInSection(0) {
             for ix in 1...(MAX_DOWNLOAD_PHOTOS - collectionView.numberOfItemsInSection(0)) {
                 let photoDict: [String:AnyObject] = [
                     Photo.Keys.Title:   "",
                     Photo.Keys.URLString: "temp",       // test
-                    Photo.Keys.Pin: self.receivedPin
+                    Photo.Keys.Pin: self.receivedPin,
+                    Photo.Keys.LocalFile: "junkID"      // tmp
                 ]
                 Photo(dictionary: photoDict, context: sharedContext)
                 CoreDataStackManager.sharedInstance().saveContext()
             }
         }
-        
-        println("... Now fetching more pics for: \(self.receivedPin.locname!)")
+
         // now get more photos
         receivedPin.downloadPhotos { (isSuccess, errorString) -> Void in
             if isSuccess {
-                println("...obtained new collection for: \(self.receivedPin.locname!)")
+                println("...obtained new collection for: \(self.receivedPin.locname!), set has: \(self.receivedPin.numPicsDownloaded())")
             } else {
                 if errorString != nil {
-                    println("...ERROR getting newCollection for: \(self.receivedPin.locname!)")
                     Client.showAlert("Error", message: errorString!, onViewController: self)
                 }
             }
@@ -229,10 +254,8 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
             case .Insert:
                 self.collectionView.insertItemsAtIndexPaths([newIndexPath!])
             case .Delete:
-                // println("  _del \(indexPath!.section) \(indexPath!.row), \(indexPath!.item)")
                 self.collectionView.deleteItemsAtIndexPaths([indexPath!])
             case .Update:
-                // println("__Update item: at :\(indexPath!.row)")
                 let cell  = self.collectionView.cellForItemAtIndexPath(indexPath!) as! PhotoViewCell
                 let photo = controller.objectAtIndexPath(indexPath!) as! Photo
                 self.configureCell(cell, withPhoto: photo)
@@ -249,15 +272,19 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
     
     // helper to configure each cell in the grid
     func configureCell(cell: PhotoViewCell, withPhoto photo: Photo) {
+        
         cell.imageView!.image = nil
         
-        // update
-        if photo.imgData != nil {
-            cell.activityIndicator?.stopAnimating()     // automatically 'hides when stopped' (set in Storyboard)
-            cell.imageView?.image = UIImage(data: photo.imgData!)
-            cell.cellUrlString = photo.urlString
-            updateNewCollectionButton()     // check if Button can be enabled yet
-        } else {
+        // update - check if photo's image exists
+        if photo.downloadStatus == .Loaded {
+            if let photoImage = ImageCache.sharedInstance().imageWithIdentifier(photo.localFilename) {
+                cell.activityIndicator?.stopAnimating()     // automatically 'hides when stopped' (set in Storyboard)
+                cell.imageView?.image = photoImage
+                cell.cellUrlString = photo.urlString
+                updateNewCollectionButton()     // check if Button can be enabled yet
+            }
+        }
+        else {
             cell.activityIndicator?.startAnimating()
         }
     }
@@ -268,6 +295,8 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         if imagesLoaded == fetchedResultsController.sections![0].numberOfObjects {
             newCollectionButton.enabled = true
         }
+        
+        //also can check - iter thru FRC's Photos, find each status, then update New Collection Button enabled
     }
     
     
@@ -283,21 +312,24 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
     
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         
-        let cell: PhotoViewCell = collectionView.dequeueReusableCellWithReuseIdentifier(cellReuseID, forIndexPath: indexPath) as! PhotoViewCell
+        var cell = collectionView.dequeueReusableCellWithReuseIdentifier(cellReuseID, forIndexPath: indexPath) as! PhotoViewCell
         
         let photo = self.fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
         
-        dispatch_async(dispatch_get_main_queue(), { () -> Void in
-            if (photo.imgData == nil) {
-                cell.activityIndicator?.startAnimating()    // show LOADING status to User
-                photo.downloadPhoto()   // get a New Photo
-                cell.cellUrlString = photo.urlString
-            } else {
-                cell.imageView?.image = UIImage(data: photo.imgData!)
-                self.updateNewCollectionButton()     // check if NewCollection button can be enabled
-                cell.cellUrlString = photo.urlString
-            }
-        })
+        cell.activityIndicator.startAnimating()
+        
+        cell.imageView.image = nil
+        
+        if let photoImage = ImageCache.sharedInstance().imageWithIdentifier(photo.localFilename) {
+            cell.imageView.image = photoImage
+            cell.activityIndicator.stopAnimating()
+            self.updateNewCollectionButton()
+        } else if photo.downloadStatus == .NotLoaded {
+            // Get a new image, on the main Queue
+            dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                photo.downloadImage()   // this download happens async; event will fire
+            })
+        }
         return cell
     }
     
@@ -312,15 +344,12 @@ class PhotosViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         let thePhoto = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
         
-        // Save selected photo to our Dict...
+        // Save selected photo to our Dict to delete
         selectedPhotosDict[indexPath] = thePhoto
         // ...Change Button title to REMOVE
         if selectedPhotosDict.count > 0 {
             newCollectionButton.setTitle(ID_BTN_REMOVE, forState: UIControlState.Normal)
         }
-        
-        // showSelectedPhotos()
-        
     }
     
     // if Photo De-selected, remove it from our Dict (i.e. not to be deleted)
