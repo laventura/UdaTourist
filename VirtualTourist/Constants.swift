@@ -35,5 +35,10 @@ extension Client {
         static let Search: String = "flickr.photos.search"
     }
     
+    struct Event {
+        static let NOTIF_ONE_PHOTO_LOADED  = "Notif.One.Photo.Loaded"
+        static let NOTIF_ALL_PHOTOS_LOADED = "Notif.All.Photos.Loaded"
+    }
+    
 
 }
