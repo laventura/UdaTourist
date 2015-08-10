@@ -9,6 +9,7 @@
 import Foundation
 import CoreData
 import MapKit
+import UIKit
 
 
 
@@ -46,7 +47,6 @@ class Pin: NSManagedObject, Printable {
         
         super.init(entity: entity,insertIntoManagedObjectContext: context)
         
-        // println(dictionary[Keys.Latitude])
         self.latitude = (dictionary[Keys.Latitude] as! NSNumber).doubleValue
         self.longitude = (dictionary[Keys.Longitude] as! NSNumber).doubleValue
         
@@ -82,6 +82,19 @@ class Pin: NSManagedObject, Printable {
         })
     }
     
+    // Deletes all Photos for this Pin
+    func deletePhotos() {
+        var currentPhotos = photos.allObjects as! [Photo]
+        for photo in currentPhotos {
+            photo.delete()
+        }
+    }
+    
+    // Returns the total num of pics in the photoset
+    func numPicsDownloaded() -> Int {
+        return self.photos.count
+    }
+    
     // fetch Photos for the Pin
     func downloadPhotos( completionHandler: (isSuccess: Bool, errorString: String?) -> Void ) {
         
@@ -106,8 +119,6 @@ class Pin: NSManagedObject, Printable {
                 // 2a. check Total # photos
                 let numPhotos = (photosDict["total"] as! String).toInt()!
                 self.numPhotos = numPhotos
-                
-                // println("Pin: -- Available \(self.numPhotos!) #pics for \(self.locname!)")
                 
                 if numPhotos < self.photos.count {
                     // TODO: delete some photos from CoreData
@@ -136,9 +147,6 @@ class Pin: NSManagedObject, Printable {
                 
                 // 3. Parse the Photos array finally
                 if let photosArray = photosDict["photo"] as? [[String:AnyObject]] {
-                    
-                    // println("  [[Pin: found \(photosArray.count) # of pics in json")
-                    
                     var tmpPhotos = [Photo]()
                     var currentPhotos = self.photos.allObjects as! [Photo]
                     
@@ -153,11 +161,14 @@ class Pin: NSManagedObject, Printable {
                             
                             let aPhotoTitle         = aPhotoDictionary["title"] as! String
                             let imgUrlString        = aPhotoDictionary["url_m"] as! String
+                            let aPhotoID            = aPhotoDictionary["id"]    as! String
+                            let aPhotoSecret        = aPhotoDictionary["secret"] as! String
                             
                             let aPhoto: [String:AnyObject] = [
                                 Photo.Keys.Title:       aPhotoTitle,
                                 Photo.Keys.URLString:   imgUrlString,
-                                Photo.Keys.Pin:         self
+                                Photo.Keys.Pin:         self,
+                                Photo.Keys.LocalFile:   aPhotoID + "_" + aPhotoSecret   // localfilename
                             ]
                             
                             if self.photos.count >= index { // update existing photo
@@ -173,7 +184,7 @@ class Pin: NSManagedObject, Printable {
                         } // for
                         
                         for photo in tmpPhotos {
-                            photo.downloadPhoto()
+                            photo.downloadImage()
                         }
                         // 3.x. Now save Coredata
                         CoreDataStackManager.sharedInstance().saveContext()
@@ -182,7 +193,7 @@ class Pin: NSManagedObject, Printable {
                     } // on the main Q
                     
                 } else {
-                    println("[Pic: ## No photos found for this location")
+                    // println("[Pic: ## No photos found for this location")
                     completionHandler(isSuccess: false, errorString: "No photos found for location: \(self.locname!)")
                 }
             }
