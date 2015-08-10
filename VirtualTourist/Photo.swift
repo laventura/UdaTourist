@@ -9,29 +9,35 @@
 import Foundation
 import CoreData
 import MapKit
+import UIKit
+
+enum DownloadStatus {
+    case NotLoaded, Loading, Loaded
+}
 
 @objc(Photo)
 class Photo: NSManagedObject, Printable {
 
     // the Flickr URL of the photo
     @NSManaged var urlString: String
-    // filepath of the Docs directory where photo stored
-    ////  @NSManaged var file: String
+
     // Pin (location) to which this photo belongs
-    @NSManaged var pin: Pin
-    @NSManaged var imgData: NSData?
-    @NSManaged var title: String
+    @NSManaged var pin: Pin                 // the Pin a Photo belongs to
+    @NSManaged var imgData: NSData?         // TODO: to be removed
+    @NSManaged var title: String            // photo title
+    @NSManaged var localFilename: String    // localname in Docs dir
     
     struct Keys {
-        //static let URL  = "url"
-        //static let File = "file"
         static let URLString    = "urlString"
-        static let IMGData      = "imgData"
         static let Title        = "title"
         static let Pin          = "pin"
+        static let LocalFile    = "localFilename"   // localfilename
+        static let ID           = "id"              // photo's ID from Flickr
+        static let Secret       = "secret"          // photo's Secret from Flickr
     }
     
-    var isDownloading: Bool     = false
+    var isDownloading: Bool     = false             // TODO: to be removed
+    var downloadStatus: DownloadStatus = .NotLoaded
     
     override init(entity: NSEntityDescription, insertIntoManagedObjectContext context: NSManagedObjectContext?) {
         super.init(entity: entity, insertIntoManagedObjectContext: context)
@@ -41,46 +47,74 @@ class Photo: NSManagedObject, Printable {
         let entity = NSEntityDescription.entityForName("Photo", inManagedObjectContext: context)
         super.init(entity: entity!, insertIntoManagedObjectContext: context)
         
-        urlString   = dictionary[Keys.URLString] as! String
-        title       = dictionary[Keys.Title] as! String
-        pin         = dictionary[Keys.Pin] as! Pin
-        
+        urlString   = dictionary[Keys.URLString]    as! String
+        title       = dictionary[Keys.Title]        as! String
+        pin         = dictionary[Keys.Pin]          as! Pin
+        localFilename = dictionary[Keys.LocalFile]  as! String
+        downloadStatus = .NotLoaded
     }
     
     func updatePhoto(dictionary: [String:AnyObject], context: NSManagedObjectContext) {
-        urlString   = dictionary[Keys.URLString] as! String
-        title       = dictionary[Keys.Title] as! String
-        pin         = dictionary[Keys.Pin] as! Pin
-        imgData     = nil
+        urlString   = dictionary[Keys.URLString]    as! String
+        title       = dictionary[Keys.Title]        as! String
+        pin         = dictionary[Keys.Pin]          as! Pin
         isDownloading = false
-        
+        localFilename = dictionary[Keys.LocalFile]  as! String
+        downloadStatus = .NotLoaded
     }
     
     // required for Printable
     override var description: String {
-        return "[Photo: \(self.urlString) at \(self.pin)]"
+        return "[Photo: id: \(self.localFilename) at \(self.pin)]"
     }
     
     // download Photo from its imgURL
-    func downloadPhoto() {
-        if imgData == nil && isDownloading != true {
+    func downloadImage() {
+        if ImageCache.sharedInstance().imageWithIdentifier(self.localFilename) == nil {
             isDownloading = true
-            // println("-- Downloading pic: [\(urlString)]")
+            downloadStatus = .Loading    // in progress
+
             let url     = NSURL(string: urlString)!
             let request = NSURLRequest(URL: url)
             NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue()) {(response, data, error) -> Void in
                 if error == nil {
-                    // println("Downloaded img for Photo:[\(self.title)]")
-                    self.imgData        = data
+                    
+                    // Update status - very imp
+                    self.downloadStatus = .Loaded
+
+                    // save file to Docs dir
+                    let picImage = UIImage(data: data!)
+                    ImageCache.sharedInstance().storeImage(picImage!, identifier: self.localFilename)
+                    
+                    // inform CoreData
                     CoreDataStackManager.sharedInstance().saveContext()
+                    
+                    // Fire the event - will be caught in AlbumVC
+                    NSNotificationCenter.defaultCenter().postNotificationName(Client.Event.NOTIF_ONE_PHOTO_LOADED, object: self)
                 } else {
                     // println("Error downloading image: \(error)")
+                    self.downloadStatus = .NotLoaded
                     self.isDownloading  = false
-                    self.imgData        = nil
                     CoreDataStackManager.sharedInstance().saveContext()
                 }
             }
         }
+    }
+    
+    // delete Photo
+    func delete() {        
+        // Delete the associated img File from local File system
+        ImageCache.sharedInstance().deleteImage(self.localFilename)
+        downloadStatus = .NotLoaded
+        
+        // delete from Core Data
+        sharedContext.deleteObject(self)
+        CoreDataStackManager.sharedInstance().saveContext()
+    }
+    
+    // MARK: - Core Data
+    var sharedContext: NSManagedObjectContext {
+        return CoreDataStackManager.sharedInstance().managedObjectContext!
     }
 
 }
