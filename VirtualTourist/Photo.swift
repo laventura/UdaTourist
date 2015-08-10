@@ -23,7 +23,7 @@ class Photo: NSManagedObject, Printable {
 
     // Pin (location) to which this photo belongs
     @NSManaged var pin: Pin                 // the Pin a Photo belongs to
-    @NSManaged var imgData: NSData?         // TODO: to be removed
+    // @NSManaged var imgData: NSData?         // TODO: to be removed
     @NSManaged var title: String            // photo title
     @NSManaged var localFilename: String    // localname in Docs dir
     
@@ -36,7 +36,7 @@ class Photo: NSManagedObject, Printable {
         static let Secret       = "secret"          // photo's Secret from Flickr
     }
     
-    var isDownloading: Bool     = false             // TODO: to be removed
+    var isDownloading: Bool     = false
     var downloadStatus: DownloadStatus = .NotLoaded
     
     override init(entity: NSEntityDescription, insertIntoManagedObjectContext context: NSManagedObjectContext?) {
@@ -92,7 +92,6 @@ class Photo: NSManagedObject, Printable {
                     // Fire the event - will be caught in AlbumVC
                     NSNotificationCenter.defaultCenter().postNotificationName(Client.Event.NOTIF_ONE_PHOTO_LOADED, object: self)
                 } else {
-                    // println("Error downloading image: \(error)")
                     self.downloadStatus = .NotLoaded
                     self.isDownloading  = false
                     CoreDataStackManager.sharedInstance().saveContext()
