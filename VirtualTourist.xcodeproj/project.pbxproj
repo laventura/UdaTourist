@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0009482D1B7548BE00F3633E /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0009482C1B7548BE00F3633E /* ImageCache.swift */; };
 		004269B01B68AE9D00DB7460 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004269AF1B68AE9D00DB7460 /* AppDelegate.swift */; };
 		004269B31B68AE9D00DB7460 /* VirtualTourist.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 004269B11B68AE9D00DB7460 /* VirtualTourist.xcdatamodeld */; };
-		004269B51B68AE9D00DB7460 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004269B41B68AE9D00DB7460 /* ViewController.swift */; };
 		004269B81B68AE9D00DB7460 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 004269B61B68AE9D00DB7460 /* Main.storyboard */; };
 		004269BA1B68AE9D00DB7460 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 004269B91B68AE9D00DB7460 /* Images.xcassets */; };
 		004269BD1B68AE9D00DB7460 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 004269BB1B68AE9D00DB7460 /* LaunchScreen.xib */; };
@@ -36,11 +36,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0009482C1B7548BE00F3633E /* ImageCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
 		004269AA1B68AE9D00DB7460 /* VirtualTourist.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VirtualTourist.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		004269AE1B68AE9D00DB7460 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		004269AF1B68AE9D00DB7460 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		004269B21B68AE9D00DB7460 /* VirtualTourist.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = VirtualTourist.xcdatamodel; sourceTree = "<group>"; };
-		004269B41B68AE9D00DB7460 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		004269B71B68AE9D00DB7460 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		004269B91B68AE9D00DB7460 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		004269BC1B68AE9D00DB7460 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
@@ -101,7 +101,6 @@
 				00DB521C1B6C112900E3563A /* Controller */,
 				004269D21B68B1B200DB7460 /* Model */,
 				004269AF1B68AE9D00DB7460 /* AppDelegate.swift */,
-				004269B41B68AE9D00DB7460 /* ViewController.swift */,
 				004269B61B68AE9D00DB7460 /* Main.storyboard */,
 				004269B91B68AE9D00DB7460 /* Images.xcassets */,
 				004269BB1B68AE9D00DB7460 /* LaunchScreen.xib */,
@@ -145,6 +144,7 @@
 				004269D31B68B1FD00DB7460 /* Pin.swift */,
 				004269D51B68B27300DB7460 /* Photo.swift */,
 				004269D71B68B54F00DB7460 /* CoreDataStackManager.swift */,
+				0009482C1B7548BE00F3633E /* ImageCache.swift */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -266,13 +266,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				004269B51B68AE9D00DB7460 /* ViewController.swift in Sources */,
 				00D685321B72B25E0006D7D7 /* PhotoViewCell.swift in Sources */,
 				00D685301B72A6D60006D7D7 /* PhotosViewController.swift in Sources */,
 				004269DA1B69E2D500DB7460 /* Client.swift in Sources */,
 				004269B31B68AE9D00DB7460 /* VirtualTourist.xcdatamodeld in Sources */,
 				004269B01B68AE9D00DB7460 /* AppDelegate.swift in Sources */,
 				00DB52251B6C36BB00E3563A /* PinAnnotation.swift in Sources */,
+				0009482D1B7548BE00F3633E /* ImageCache.swift in Sources */,
 				004269D41B68B1FD00DB7460 /* Pin.swift in Sources */,
 				004269D61B68B27300DB7460 /* Photo.swift in Sources */,
 				00DB521E1B6C114B00E3563A /* LocationViewController.swift in Sources */,
