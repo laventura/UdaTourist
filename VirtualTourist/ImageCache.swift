@@ -21,7 +21,6 @@ class ImageCache {
         }
         return Singleton.sharedInstance
     }
-
     
     //MARK: - Helper
     
@@ -70,7 +69,6 @@ class ImageCache {
         //Change image representation to PNG and save it to Documents Directory
         let data = UIImagePNGRepresentation(image!)
         data.writeToFile(path, atomically: true)
-
     }
     
     //MARK: - Clearing images from Docs directory
